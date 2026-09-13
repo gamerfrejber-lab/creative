@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: smartdev-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - smartdev
+
+  server:
+    build: ./server
+    container_name: smartdev-server
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/smartdev
+      - JWT_SECRET=${JWT_SECRET:-smartdev_secret_change_me}
+      - CLIENT_URL=http://localhost
+    depends_on:
+      - mongo
+    networks:
+      - smartdev
+    restart: unless-stopped
+
+  client:
+    build: ./client
+    container_name: smartdev-client
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    networks:
+      - smartdev
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+
+networks:
+  smartdev:
+    driver: bridge
